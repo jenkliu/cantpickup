@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>Calendar API Sample Application</title>
+  </head>
+  <body>
+
+    {% if has_credentials %}
+
+    {% else %}
+    <p>
+      No credentials! grant permission below:
+    </p>
+    <blockquote>
+      <a href="{{ url }}">{{ url }}</a>
+    </blockquote>
+    {% endif %}
+  
+    <form id="calendar_recording">
+      <label> Choose a calendar: </label>
+      <select>
+      {% for cal in calendar_list %}
+        <option value="{{ cal.id }}"> {{ cal.summary }}</option>
+      {% endfor %}
+      </select>
+
+      <input type="submit" />
+    </form>
+
+
+  </body>
+</html>
