@@ -105,7 +105,7 @@ class Account(ndb.Model):
   user_id = ndb.StringProperty()
   text_conf = ndb.StringProperty()
   phone_no = ndb.StringProperty()
-  twilio_sid = ndb.StringProperty()
+  twilio_num = ndb.StringProperty()
 
 class CalendarRecording(ndb.Model):
   user_id = ndb.StringProperty()
@@ -151,8 +151,21 @@ class ConfirmCode(webapp2.RequestHandler):
       # success
       # create twilio account
       client = TwilioRestClient(PARENT_ACCOUNT_SID, PARENT_AUTH_TOKEN)
-      subaccount = client.accounts.create()
-      account.twilio_sid = subaccount.sid
+      # TODO: make the friendly_name the user's email address
+      nickname = users.get_current_user().nickname()
+      print nickname
+      subaccount = client.accounts.create(name = nickname)
+      subaccount_client = TwilioRestClient(subaccount.sid, subaccount.auth_token)
+      # account.twilio_sid = subaccount.sid
+      numbers = subaccount_client.phone_numbers.search(type="local")
+      if numbers:
+        # num = numbers[0].friendly_name
+        # print num
+        # number = subaccount_client.phone_numbers.purchase(type="local", phone_number=num)
+        # numbers[0].purchase()
+        account.twilio_num = number
+      else:
+        print "no avail numbers"
       account.put()
       # pass
       # redirect to next step: add recording handler?
@@ -191,8 +204,14 @@ class AddRecordingHandler(webapp2.RequestHandler):
 
 class SuccessHandler(webapp2.RequestHandler):
     def get(self):
+      # give them twilio phone number here
+      account = Account.query(Account.user_id==get_current_uid()).get()
+      variables = {}
+      twilio_num = account.twilio_num
+      if twilio_num:
+        variables['twilio_num'] = twilio_num
       template = JINJA_ENVIRONMENT.get_template('success.html')
-      self.response.write(template.render())
+      self.response.write(template.render(variables))
 
 class CallHandler(webapp2.RequestHandler):
   def post(self):

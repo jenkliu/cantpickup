@@ -1,0 +1,59 @@
+<html>
+	<head>
+		<!-- # ajax for submitting phone input form -->
+		<link type="text/css" rel="stylesheet" href="/stylesheets/main.css">
+		<script src="http://code.jquery.com/jquery-latest.min.js"
+        type="text/javascript"></script>
+		<script>
+			$(document).on('submit', 'form.phone_input', function(evt){
+				evt.preventDefault();
+				// TODO: CHECK IF PHONE NUMBER IS 10 DIGITS
+				$.ajax({
+					url: $(this).attr('action'),
+					type: $(this).attr('method'),
+					data: $(this).serialize(),
+					success: function() {
+						$(".conf_input").show();
+					}
+				});
+			});
+			$(document).on('submit', 'form.conf_input', function(evt){
+				$.ajax({
+					url: $(this).attr('action'),
+					type: $(this).attr('method'),
+					data: $(this).serialize(),
+					success: function(json) {
+						if (json) {
+							console.log(json);
+							$(".error").show();
+						} else {
+							// redirect to next page
+							location.href = "/create";
+						}
+					}
+				});
+				evt.preventDefault();
+			});
+
+
+		</script>
+
+	</head>
+	<body>
+		<form class="phone_input" action="" method="POST">
+			<label >Enter your phone number:
+				<input type="text" name="phone_no"/>
+				<button>Go</button>
+			</label>
+		</form>
+		<form class="conf_input" action="/confirm_code" method="POST">
+			<label>You should have just received a text message with the verification code. Enter it here:
+				<input type="text" name="conf" />
+				<button>Go</button>
+			</label>
+			<div class="error">
+				Whoops, that was the wrong code. Please try again.
+			</div>
+		</form>
+	</body>
+</html>
