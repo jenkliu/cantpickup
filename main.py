@@ -159,11 +159,14 @@ class ConfirmCode(webapp2.RequestHandler):
       # account.twilio_sid = subaccount.sid
       numbers = subaccount_client.phone_numbers.search(type="local")
       if numbers:
-        # num = numbers[0].friendly_name
-        # print num
+        num = numbers[0].friendly_name
+        print num
         # number = subaccount_client.phone_numbers.purchase(type="local", phone_number=num)
-        # numbers[0].purchase()
-        account.twilio_num = number
+        numbers[0].purchase()
+        nums = subaccount_client.phone_numbers.list()
+        num = nums[0].friendly_name
+        print num
+        account.twilio_num = num
       else:
         print "no avail numbers"
       account.put()
