@@ -1,6 +1,6 @@
 cantpickup
 ==========
 
-Sets up a phone number that syncs with your Google Calendar to auto-respond with custom messages when you're busy 
+Set up a phone number that syncs with your Google Calendar to auto-respond with custom recordings when you're busy 
 
-created at PennApps 2014
+Created at PennApps 2014
