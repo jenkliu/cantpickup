@@ -4,6 +4,9 @@
 		<link type="text/css" rel="stylesheet" href="/stylesheets/main.css">
 		<script src="http://code.jquery.com/jquery-latest.min.js"
         type="text/javascript"></script>
+    </head>
+
+
         <body style="background-color:#2d4174;">
 		<script>
 			$(document).on('submit', 'form.phone_input', function(evt){
@@ -37,33 +40,25 @@
 			});
 
 		</script>
-	</body>
-
-	</head>
-	<body>
-		<h1 style="text-align:center;font-family:happy monkey;color:white;font-size:20px;">
+	
+	<div>
+		<h1 style="text-align:center;font-family:happy monkey;color:#ea8b75;font-size:40px;">
 			<img src="ttthm logo.jpg" width="550" height="275">
 		<br/>
 		<br/>
 		<form class="phone_input" action="" method="POST">
-			<label >Enter your phone number:
-				<input type="text" name="phone_no"/>
-				<button>Go</button>
+			<label >Welcome to <br/> Talk to the HANDnswering machine!
 			</label>
-			<h2 style="color: #ea8b75;font-size:13px">Can I have it?</h2>
 		</form>
 	</h1>
-	<h1 style="text-align:center;font-family:happy monkey;color:white;font-size:20px;">
+	<h2 style="text-align:center;font-family:happy monkey;color:white;font-size:20px;">
 		<form class="conf_input" action="/confirm_code" method="POST">
-			<label>You should have just received a text message with the verification code. <br/> Enter it here:
+			<label>Please enter your Gmail account information to get started:<br/>
 				<input type="text" name="conf" />
 				<button>Go</button>
 			</label>
-			<br/>
-			<div class="error">
-				Whoops, that was the wrong code. Please try again.
-			</div>
 		</form>
-	</h1>
+	</h2>
+	</div>
 	</body>
 </html>
