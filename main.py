@@ -25,6 +25,7 @@ and save them as 'client_secrets.json' in the project directory.
 import httplib2
 import logging
 import os
+import datetime as dt
 
 from apiclient import discovery
 from oauth2client import appengine
@@ -34,6 +35,9 @@ from google.appengine.ext import ndb
 
 import webapp2
 import jinja2
+
+# from twilio.util import TwilioCapability
+from twilio import twiml
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -76,8 +80,13 @@ decorator = appengine.oauth2decorator_from_clientsecrets(
 
 DEFAULT_MSGSTORE_NAME = 'default_msgstore'
 
-def cmsgstore_key(msgstore_name=DEFAULT_MSGSTORE_NAME):
+def msgstore_key(msgstore_name=DEFAULT_MSGSTORE_NAME):
   return ndb.Key('Msgstore', msgstore_name)
+
+class Account(ndb.Model):
+  user = ndb.UserProperty()
+  phone_no = ndb.StringProperty()
+  # twilio_id
 
 class CalendarRecording(ndb.Model):
   user = ndb.UserProperty()
@@ -88,33 +97,84 @@ class MainHandler(webapp2.RequestHandler):
 
   @decorator.oauth_aware
   def get(self):
-    http = decorator.http()
-    result = service.calendarList().list().execute(http=http)
-    cals = result.get('items', [])
-    # for cal in cals:
-    #   print cal['summary']
     variables = {
-        'url': decorator.authorize_url(),
-        'has_credentials': decorator.has_credentials(),
-        'calendar_list': cals
-      }
+      'url': decorator.authorize_url(),
+      'has_credentials': decorator.has_credentials(),
+    }
+    if decorator.has_credentials():
+      print "has credentials"
+
+      http = decorator.http()
+      result = service.calendarList().list().execute(http=http)
+      cals = result.get('items', [])
+      variables['calendar_list'] = cals
+    # # for cal in cals:
+    # #   print cal['summary']
+
 
     template = JINJA_ENVIRONMENT.get_template('main.html')
     self.response.write(template.render(variables))
 
-# class Result(webapp2.RequestHandler):
-  
+class AddRecordingHandler(webapp2.RequestHandler):
+  def post(self):
+    msgstore_name = self.request.get('msgstore_name',
+                                    DEFAULT_MSGSTORE_NAME)
+    cal_recording = CalendarRecording(parent = msgstore_key(msgstore_name))
+    if users.get_current_user():
+      cal_recording.user = users.get_current_user()
 
-#   def post(self):
-#       if users.get_current_user():
+    cal_recording.calendar_id = self.request.get('calendar_id')
 
+    ## TWILIO STUFF     
+    # account_sid = "ACXXXXXXXXXXXXXXX"
+    # auth_token = "secret"
+     
+    # capability = TwilioCapability(account_sid, auth_token)
+    # capability.allow_client_incoming("tommy")
+    # print capability.generate()
 
+    #####################
 
+    cal_recording.put()
 
+    self.redirect('/success')
+
+class SuccessHandler(webapp2.RequestHandler):
+    def get(self):
+      template = JINJA_ENVIRONMENT.get_template('success.html')
+      self.response.write(template.render())
+
+class CallHandler(webapp2.RequestHandler):
+  def post(self):
+    resp = twiml.Response()
+    resp.say("Hello Monkey")
+   
+    self.response.headers['Content-Type'] = 'text/xml' 
+    self.response.write(str(resp))
+
+  # param: phone number
+  # get the user associated with the phone number
+  # get the callrecordings associated with this user
+  # get the calendar_id associated with the callrecordings
+  # cal_id = 
+
+  # get the current time
+  # tNow  = dt.datetime.now()
+  # tHrBefore = tNow - dt.timedelta(minutes = tNow.minute, seconds = tNow.second, microseconds =  tNow.microsecond)
+  # tHrAfter = tHrBefore + dt.timedelta(hours = 1)
+  # result = service.events().list(calendarId = cal_id, timeMin = tHrBefore.isoformat(), timeMax = tHrAfter.isoformat()).execute(http=http)
+  # events = result.get('items', [])
+  # if len(events) > 0:
+  #   # busy!!!
+  # else:
+  #   # redirect to phone number
 
 app = webapp2.WSGIApplication(
     [
      ('/', MainHandler),
+     ('/add', AddRecordingHandler),
+     ('/success', SuccessHandler),
+     ('/call', CallHandler),
      (decorator.callback_path, decorator.callback_handler()),
     ],
     debug=True)

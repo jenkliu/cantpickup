@@ -1,4 +1,4 @@
-application: app-id-goes-here
+application: cantpickup
 version: 2
 runtime: python27
 threadsafe: true

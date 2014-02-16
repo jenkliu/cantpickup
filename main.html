@@ -15,14 +15,15 @@
     </blockquote>
     {% endif %}
   
-    <form id="calendar_recording">
+    <form id="calendar_recording" action="/add" method="post">
       <label> Choose a calendar: </label>
-      <select>
-      {% for cal in calendar_list %}
-        <option value="{{ cal.id }}"> {{ cal.summary }}</option>
-      {% endfor %}
-      </select>
-
+      {% if calendar_list %}
+        <select name="calendar_id">
+        {% for cal in calendar_list %}
+          <option value="{{ cal.id }}"> {{ cal.summary }}</option>
+        {% endfor %}
+        </select>
+      {% endif %}
       <input type="submit" />
     </form>
 
