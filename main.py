@@ -105,6 +105,7 @@ class Account(ndb.Model):
   user_id = ndb.StringProperty()
   text_conf = ndb.StringProperty()
   phone_no = ndb.StringProperty()
+  twilio_num_callable = ndb.StringProperty()
   twilio_num = ndb.StringProperty()
 
 class CalendarRecording(ndb.Model):
@@ -165,8 +166,10 @@ class ConfirmCode(webapp2.RequestHandler):
         numbers[0].purchase()
         nums = subaccount_client.phone_numbers.list()
         num = nums[0].friendly_name
+        num_callable = nums[0].phone_number
         print num
         account.twilio_num = num
+        account.twilio_num_callable = num_callable
       else:
         print "no avail numbers"
       account.put()
@@ -218,11 +221,17 @@ class SuccessHandler(webapp2.RequestHandler):
 
 class CallHandler(webapp2.RequestHandler):
   def post(self):
+    req = self.request.get("To")
+    print req
     resp = twiml.Response()
     resp.say("Hello Monkey")
    
     self.response.headers['Content-Type'] = 'text/xml' 
     self.response.write(str(resp))
+
+    account = Account.query(Account.user_id==get_current_uid()).get()
+    cr = CalendarRecording.query(Account.user_id==get_current_uid()).get()
+
 
   # param: phone number
   # get the user associated with the phone number
