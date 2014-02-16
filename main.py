@@ -111,6 +111,7 @@ class Account(ndb.Model):
 class CalendarRecording(ndb.Model):
   user_id = ndb.StringProperty()
   calendar_id = ndb.StringProperty(indexed=False)
+  message = ndb.StringProperty()
   #recording = file property?
 
 ############## HANDLERS ####################################
@@ -202,15 +203,15 @@ class AddRecordingHandler(webapp2.RequestHandler):
                                     DEFAULT_MSGSTORE_NAME)
     cal_recording = CalendarRecording(parent = msgstore_key(msgstore_name))
     if users.get_current_user():
-      cal_recording.user_id = users.get_current_user().user_id()
+      cal_recording.user_id = users.get_current_uid()
 
     cal_recording.calendar_id = self.request.get('calendar_id')
+    cal_recording.message = self.request.get('message')
     cal_recording.put()
     self.redirect('/success')
 
 class SuccessHandler(webapp2.RequestHandler):
     def get(self):
-      # give them twilio phone number here
       account = Account.query(Account.user_id==get_current_uid()).get()
       variables = {}
       twilio_num = account.twilio_num
@@ -220,35 +221,61 @@ class SuccessHandler(webapp2.RequestHandler):
       self.response.write(template.render(variables))
 
 class CallHandler(webapp2.RequestHandler):
+  def get(self):
+    req_num = self.request.get("To")
+    print req_num
+    account = Account.query(Account.twilio_num_callable==req_num).get()
+    if account:
+      uid = account.user_id
+      cr = CalendarRecording.query(CalendarRecording.user_id==uid).get()
+      cid = cr.calendar_id
+      
+      # get the current time
+      tNow  = dt.datetime.now()
+      tHrBefore = tNow - dt.timedelta(minutes = tNow.minute, seconds = tNow.second, microseconds =  tNow.microsecond)
+      tHrAfter = tHrBefore + dt.timedelta(hours = 1)
+      result = service.events().list(calendarId = cid, timeMin = tHrBefore.isoformat(), timeMax = tHrAfter.isoformat()).execute(http=http)
+      events = result.get('items', [])
+      
+      resp = twiml.Response()
+      if len(events) > 0: # i'm busy!!!!!!!
+              # Play an MP3
+        # resp.say('what do you want from me?')
+        resp.say(cr.message)
+        #resp.play(mp3File)
+        resp.say("Record your message after the tone.")
+        resp.record(maxLength="30", action="/handle_recording")
+        #resp.say("Goodbye.")
+      else:
+        # redirect to phone number
+        # Dial - connect that number to the incoming caller.
+        resp.dial(phoneNumber)
+        # If the dial fails:
+        resp.say("The call failed, or the remote party hung up. Goodbye.")
+
+      self.response.write(str(resp))
+
+    # resp.say("Hello Monkey")
+    # self.response.headers['Content-Type'] = 'text/xml' 
+
+class HandleRecording(webapp2.RequestHandler):
   def post(self):
-    req = self.request.get("To")
-    print req
+    """Play back the caller's recording."""
     resp = twiml.Response()
-    resp.say("Hello Monkey")
-   
-    self.response.headers['Content-Type'] = 'text/xml' 
+    # recording_url = request.values.get("RecordingUrl", None)
+    recording_url = self.request.get("RecordingUrl")
+    resp.say(recording_url)
+    print recording_url
+    print type(recording_url)
+    message = client.messages.create(to="+14349609765", from_="+15402239053",
+                                    body=recording_url)
+    
+    resp.say("Thanks for message; listen to what you recorded.")
+    resp.play(recording_url)
+    resp.say("Goodbye.")
+
     self.response.write(str(resp))
 
-    account = Account.query(Account.user_id==get_current_uid()).get()
-    cr = CalendarRecording.query(Account.user_id==get_current_uid()).get()
-
-
-  # param: phone number
-  # get the user associated with the phone number
-  # get the callrecordings associated with this user
-  # get the calendar_id associated with the callrecordings
-  # cal_id = 
-
-  # get the current time
-  # tNow  = dt.datetime.now()
-  # tHrBefore = tNow - dt.timedelta(minutes = tNow.minute, seconds = tNow.second, microseconds =  tNow.microsecond)
-  # tHrAfter = tHrBefore + dt.timedelta(hours = 1)
-  # result = service.events().list(calendarId = cal_id, timeMin = tHrBefore.isoformat(), timeMax = tHrAfter.isoformat()).execute(http=http)
-  # events = result.get('items', [])
-  # if len(events) > 0:
-  #   # busy!!!
-  # else:
-  #   # redirect to phone number
 
 app = webapp2.WSGIApplication(
     [
@@ -257,6 +284,7 @@ app = webapp2.WSGIApplication(
      ('/create', AddRecordingHandler),
      ('/success', SuccessHandler),
      ('/call', CallHandler),
+     ('/handle_recording', HandleRecording),
      (decorator.callback_path, decorator.callback_handler()),
     ],
     debug=True)
