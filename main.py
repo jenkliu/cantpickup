@@ -35,9 +35,14 @@ from google.appengine.ext import ndb
 
 import webapp2
 import jinja2
+import string
+import random
 
 # from twilio.util import TwilioCapability
 from twilio import twiml
+from twilio.rest import TwilioRestClient
+import twilio_auth
+
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -79,22 +84,72 @@ decorator = appengine.oauth2decorator_from_clientsecrets(
 
 
 DEFAULT_MSGSTORE_NAME = 'default_msgstore'
+DEFAULT_USERSTORE_NAME = 'default_userstore'
+
 
 def msgstore_key(msgstore_name=DEFAULT_MSGSTORE_NAME):
   return ndb.Key('Msgstore', msgstore_name)
 
+def userstore_key(userstore_name=DEFAULT_USERSTORE_NAME):
+  return ndb.Key('Userstore', userstore_name)
+
+def get_current_uid():
+  return users.get_current_user().user_id()
+
 class Account(ndb.Model):
-  user = ndb.UserProperty()
+  user_id = ndb.StringProperty()
+  text_conf = ndb.StringProperty()
   phone_no = ndb.StringProperty()
-  # twilio_id
+  twilio_sid = ndb.StringProperty()
 
 class CalendarRecording(ndb.Model):
-  user = ndb.UserProperty()
+  user_id = ndb.StringProperty()
   calendar_id = ndb.StringProperty(indexed=False)
   #recording = file property?
 
-class MainHandler(webapp2.RequestHandler):
+############## HANDLERS ####################################
 
+class PhoneInput(webapp2.RequestHandler):
+  def get(self):
+    template = JINJA_ENVIRONMENT.get_template('phone_input.html')
+    self.response.write(template.render())
+    
+  def post(self):
+    # create a user entry
+    userstore_name = self.reqest.get('userstore_name',
+                                  DEFAULT_USERSTORE_NAME)
+    account = Account(parent = userstore_key(userstore_name))
+    account.user_id = get_current_uid()
+
+    # text the confirmation code
+    client = TwilioRestClient(parent_account_sid, parent_auth_token)
+    phone_no = self.request.get('phone_no')
+    code=string.ascii_lowercase+string.digits
+    verification_code=''.join(random.choice(code) for i in range(8))
+    message="What's up? Enter %s on the sign up page to verify your Can't Pickup account! Thanks :)"%(verification_code)   
+    message = client.messages.create(to=phone_no, from_="+15402239053",
+                                         body=message)
+    
+    # store the user_id and text conf code
+    account.phone_no = phone_no
+    account.text_conf = verification_code
+
+class ConfirmCode(webapp2.RequestHandler):
+  def post(self):
+    conf_input = self.request.get('conf')
+    account = Account.get_by_id(get_current_uid())
+    if account:
+      if account.text_conf == conf_input:
+        # success
+        # create twilio account
+        client = TwilioRestClient(parent_account_sid, parent_auth_token)
+        subaccount = client.accounts.create()
+        account.twilio_sid = subaccount.sid
+        # redirect to next step: add recording handler?
+      # else:
+        # error
+
+class AddRecordingHandler(webapp2.RequestHandler):
   @decorator.oauth_aware
   def get(self):
     variables = {
@@ -102,41 +157,23 @@ class MainHandler(webapp2.RequestHandler):
       'has_credentials': decorator.has_credentials(),
     }
     if decorator.has_credentials():
-      print "has credentials"
-
       http = decorator.http()
       result = service.calendarList().list().execute(http=http)
       cals = result.get('items', [])
       variables['calendar_list'] = cals
-    # # for cal in cals:
-    # #   print cal['summary']
-
 
     template = JINJA_ENVIRONMENT.get_template('main.html')
     self.response.write(template.render(variables))
 
-class AddRecordingHandler(webapp2.RequestHandler):
   def post(self):
     msgstore_name = self.request.get('msgstore_name',
                                     DEFAULT_MSGSTORE_NAME)
     cal_recording = CalendarRecording(parent = msgstore_key(msgstore_name))
     if users.get_current_user():
-      cal_recording.user = users.get_current_user()
+      cal_recording.user_id = users.get_current_user().user_id()
 
     cal_recording.calendar_id = self.request.get('calendar_id')
-
-    ## TWILIO STUFF     
-    # account_sid = "ACXXXXXXXXXXXXXXX"
-    # auth_token = "secret"
-     
-    # capability = TwilioCapability(account_sid, auth_token)
-    # capability.allow_client_incoming("tommy")
-    # print capability.generate()
-
-    #####################
-
     cal_recording.put()
-
     self.redirect('/success')
 
 class SuccessHandler(webapp2.RequestHandler):
@@ -171,8 +208,9 @@ class CallHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication(
     [
-     ('/', MainHandler),
-     ('/add', AddRecordingHandler),
+     ('/', PhoneInput),
+     ('/confirm_code', ConfirmCode),
+     ('/create', AddRecordingHandler),
      ('/success', SuccessHandler),
      ('/call', CallHandler),
      (decorator.callback_path, decorator.callback_handler()),
