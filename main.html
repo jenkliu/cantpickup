@@ -1,9 +1,13 @@
 <html>
   <head>
-    <title>Calendar API Sample Application</title>
+    <!-- # ajax for submitting phone input form -->
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css">
+    <link href='http://fonts.googleapis.com/css?family=Happy+Monkey' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,500,600,700' rel='stylesheet' type='text/css'>
+    <script src="http://code.jquery.com/jquery-latest.min.js"
+        type="text/javascript"></script>
   </head>
-  <body>
+  <body style="background-color:#2d4174;">
 
     {% if has_credentials %}
 
@@ -15,23 +19,27 @@
       <a href="{{ url }}">{{ url }}</a>
     </blockquote>
     {% endif %}
-  
+
+
+
+      <div class="main">
+      <h1 style="text-align:center;font-family:happy monkey;color:white;font-size:20px;">
+        <img src="/stylesheets/ttthmlogo.jpg" width="550" height="275">
     <form id="calendar_recording" action="/create" method="post">
-      <label> Choose a calendar: </label>
+      <label class="helper text big"> Choose a calendar: 
       {% if calendar_list %}
-        <select name="calendar_id">
+        <br/><select name="calendar_id">
         {% for cal in calendar_list %}
           <option value="{{ cal.id }}"> {{ cal.summary }}</option>
         {% endfor %}
         </select>
       {% endif %}
-
-      <label> Input a custom message:
-        <input type="text" />
       </label>
-      <input type="submit" name="msg"/>
+
+        <textarea class="msg" name="msg" placeholder="Enter a custom message"></textarea>
+      <input type="submit" value="Done" class="button"/>
     </form>
 
-
+    </div>
   </body>
 </html>

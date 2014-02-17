@@ -2,9 +2,10 @@
 	<head>
 		<!-- # ajax for submitting phone input form -->
 		<link type="text/css" rel="stylesheet" href="/stylesheets/main.css">
+		<link href='http://fonts.googleapis.com/css?family=Happy+Monkey' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Raleway:400,500,600,700' rel='stylesheet' type='text/css'>
 		<script src="http://code.jquery.com/jquery-latest.min.js"
         type="text/javascript"></script>
-        <body style="background-color:#2d4174;">
 		<script>
 			$(document).on('submit', 'form.phone_input', function(evt){
 				evt.preventDefault();
@@ -37,33 +38,34 @@
 			});
 
 		</script>
-	</body>
 
 	</head>
-	<body>
-		<h1 style="text-align:center;font-family:happy monkey;color:white;font-size:20px;">
-			<img src="ttthm logo.jpg" width="550" height="275">
-		<br/>
-		<br/>
-		<form class="phone_input" action="" method="POST">
-			<label >Enter your phone number:
-				<input type="text" name="phone_no"/>
-				<button>Go</button>
-			</label>
-			<h2 style="color: #ea8b75;font-size:13px">Can I have it?</h2>
-		</form>
-	</h1>
-	<h1 style="text-align:center;font-family:happy monkey;color:white;font-size:20px;">
-		<form class="conf_input" action="/confirm_code" method="POST">
-			<label>You should have just received a text message with the verification code. <br/> Enter it here:
-				<input type="text" name="conf" />
-				<button>Go</button>
-			</label>
+        <body style="background-color:#2d4174;">
+		<div class="main">
+			<h1 style="text-align:center;color:white;font-size:20px;font-weight:normal;">
+				<img src="/stylesheets/ttthmlogo.jpg" width="550" height="275">
 			<br/>
-			<div class="error">
-				Whoops, that was the wrong code. Please try again.
-			</div>
-		</form>
-	</h1>
+			<br/>
+			<form class="phone_input" action="" method="POST">
+				<label >
+					<input type="text" name="phone_no" placeholder="Enter your phone number"/>
+					<button>Go</button>
+				</label>
+				<h2 class="helper">Can I have it?</h2>
+			</form>
+		</h1>
+		<h1 style="text-align:center;color:white;font-size:20px;font-weight:normal;">
+			<form class="conf_input" action="/confirm_code" method="POST">
+				<label><span class="helper text">Check your texts for a verification code. </span><br/>
+					<input type="text" name="conf" placeholder="Enter that code"/>
+					<button>Go</button>
+				</label>
+				<br/>
+				<div class="error">
+					Whoops, that was the wrong code. Please try again.
+				</div>
+			</form>
+		</h1>
+		</div>
 	</body>
 </html>

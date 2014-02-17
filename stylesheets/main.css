@@ -1,4 +1,77 @@
+body {
+  font-family: 'Raleway', sans-serif;
+  color: #ea8b75;
+}
 .conf_input,
 .error {
   display: none;
+}
+.helper {
+  color: #ea8b75;
+  font-size: 18px;
+  margin: 0;
+  font-family: 'Raleway', sans-serif;
+}
+.helper.text.big {
+  font-size: 36px;
+  margin: 20px auto 0;
+  display: block;
+}
+input,
+button,
+.sign-in,
+textarea,
+select {
+  height: 50px;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 24px;
+  margin: 10px 3px;
+}
+input.msg,
+button.msg,
+.sign-in.msg,
+textarea.msg,
+select.msg {
+  height: 120px;
+  width: 400px;
+}
+select {
+  height: 40px;
+  width: 400px;
+}
+.button {
+  cursor: pointer;
+}
+.button.sign-in {
+  margin-top: 33px;
+}
+input {
+  width: 400px;
+}
+h1 {
+  font-size: 24px;
+  font-family: 'Raleway', sans-serif;
+}
+p {
+  text-align: center;
+}
+.emph {
+  font-weight: bold;
+  font-size: 38px;
+}
+.main {
+  width: 600px;
+  margin: 20px auto;
+  text-align: center;
+}
+.number {
+  font-size: 70px;
+  color: #fff;
+}
+.normal {
+  font-weight: normal;
+  color: #fff;
+  opacity: 0.7;
+  font-size: 27px;
 }

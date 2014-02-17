@@ -117,7 +117,13 @@ class CalendarRecording(ndb.Model):
 ############## HANDLERS ####################################
 
 class PhoneInput(webapp2.RequestHandler):
+  @decorator.oauth_aware
   def get(self):
+    # if decorator.has_credentials():
+    #   http = decorator.http()
+    #   result = service.calendarList().list().execute(http=http)
+    #   cals = result.get('items', [])
+    #   variables['calendar_list'] = cals
     template = JINJA_ENVIRONMENT.get_template('phone_input.html')
     self.response.write(template.render())
 
@@ -127,15 +133,15 @@ class PhoneInput(webapp2.RequestHandler):
                                   DEFAULT_USERSTORE_NAME)
     account = Account(parent = userstore_key(userstore_name))
     account.user_id = get_current_uid()
-    print get_current_uid()
+    # print get_current_uid()
     # text the confirmation code
-    # client = TwilioRestClient(PARENT_ACCOUNT_SID, PARENT_AUTH_TOKEN)
+    client = TwilioRestClient(PARENT_ACCOUNT_SID, PARENT_AUTH_TOKEN)
     phone_no = self.request.get('phone_no')
     code=string.ascii_lowercase+string.digits
     verification_code=''.join(random.choice(code) for i in range(8))
     message="What's up? Enter %s on the sign up page to verify your Can't Pickup account! Thanks :)"%(verification_code)   
-    # message = client.messages.create(to=phone_no, from_="+15402239053",
-                                         # body=message)
+    message = client.messages.create(to=phone_no, from_="+15402239053",
+                                         body=message)
     
     # store the user_id and text conf code
     account.phone_no = phone_no
@@ -203,10 +209,10 @@ class AddRecordingHandler(webapp2.RequestHandler):
                                     DEFAULT_MSGSTORE_NAME)
     cal_recording = CalendarRecording(parent = msgstore_key(msgstore_name))
     if users.get_current_user():
-      cal_recording.user_id = users.get_current_uid()
+      cal_recording.user_id = get_current_uid()
 
     cal_recording.calendar_id = self.request.get('calendar_id')
-    cal_recording.message = self.request.get('message')
+    cal_recording.message = self.request.get('msg')
     cal_recording.put()
     self.redirect('/success')
 
@@ -221,7 +227,7 @@ class SuccessHandler(webapp2.RequestHandler):
       self.response.write(template.render(variables))
 
 class CallHandler(webapp2.RequestHandler):
-  def get(self):
+  def post(self):
     req_num = self.request.get("To")
     print req_num
     account = Account.query(Account.twilio_num_callable==req_num).get()
@@ -236,7 +242,6 @@ class CallHandler(webapp2.RequestHandler):
       tHrAfter = tHrBefore + dt.timedelta(hours = 1)
       result = service.events().list(calendarId = cid, timeMin = tHrBefore.isoformat(), timeMax = tHrAfter.isoformat()).execute(http=http)
       events = result.get('items', [])
-      
       resp = twiml.Response()
       if len(events) > 0: # i'm busy!!!!!!!
               # Play an MP3
@@ -276,10 +281,15 @@ class HandleRecording(webapp2.RequestHandler):
 
     self.response.write(str(resp))
 
+class MainHandler(webapp2.RequestHandler):
+  def get(self):
+    template = JINJA_ENVIRONMENT.get_template('signin.html')
+    self.response.write(template.render())
 
 app = webapp2.WSGIApplication(
     [
-     ('/', PhoneInput),
+     ('/', MainHandler),
+     ('/register', PhoneInput),
      ('/confirm_code', ConfirmCode),
      ('/create', AddRecordingHandler),
      ('/success', SuccessHandler),
