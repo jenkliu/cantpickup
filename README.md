@@ -1,6 +1,8 @@
-cantpickup
+Talk to the HANDswering Machine
 ==========
 
-Set up a phone number that syncs with your Google Calendar to auto-respond with custom recordings when you're busy 
+http://talktothehandsweringmachine.com
 
-Created at PennApps 2014
+Directs calls to a custom voicemail message during busy blocks in your Google calendar of choice.
+
+Created by Allie, Jessie, and Jen at PennApps 2014 - our first overnight hackathon :)
